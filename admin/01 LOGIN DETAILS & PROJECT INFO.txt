@@ -1,8 +1,6 @@
-**Log on to codeastro.com for more projects!***
-
 **Database Name: onlinefoodphp**
 
-**Developed by Salman Ansari**
+**Developed by Fulanda Brian**
 
 **Recommended PHP Version 5.6, 7.4**
 
