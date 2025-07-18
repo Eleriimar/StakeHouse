@@ -96,6 +96,43 @@ if(empty($_SESSION['user_id'])) {
 
         <section class="restaurants-page">
             <div class="container">
+                
+                <!-- Status Messages -->
+                <?php
+                if(isset($_GET['msg'])) {
+                    if($_GET['msg'] == 'deleted') {
+                        echo '<div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <strong>Success!</strong> Your order has been cancelled successfully.
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>';
+                    }
+                }
+                if(isset($_GET['error'])) {
+                    $error_msg = '';
+                    switch($_GET['error']) {
+                        case 'delete_failed':
+                            $error_msg = 'Failed to cancel the order. Please try again.';
+                            break;
+                        case 'invalid_order':
+                            $error_msg = 'Invalid order or you do not have permission to cancel this order.';
+                            break;
+                        case 'invalid_request':
+                            $error_msg = 'Invalid request.';
+                            break;
+                        default:
+                            $error_msg = 'An error occurred.';
+                    }
+                    echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Error!</strong> ' . $error_msg . '
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>';
+                }
+                ?>
+                
                 <div class="row">
                     <div class="col-xs-12">
                         <div class="bg-gray">

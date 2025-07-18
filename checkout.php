@@ -19,33 +19,33 @@ if(empty($_SESSION["user_id"]))
 	header('location:login.php');
 }
 else{
-
-										  
-												foreach ($_SESSION["cart_item"] as $item)
-												{
-											
-												$item_total += ($item["price"]*$item["quantity"]);
-												
-													if($_POST['submit'])
-													{
-						
-													$SQL="insert into users_orders(u_id,title,quantity,price) values('".$_SESSION["user_id"]."','".$item["title"]."','".$item["quantity"]."','".$item["price"]."')";
-						
-														mysqli_query($db,$SQL);
-														
-                                                        
-                                                        unset($_SESSION["cart_item"]);
-                                                        unset($item["title"]);
-                                                        unset($item["quantity"]);
-                                                        unset($item["price"]);
-														$success = "Thank you. Your order has been placed!";
-
-                                                        function_alert();
-
-														
-														
-													}
-												}
+    $item_total = 0;
+    
+    if(isset($_POST['submit']) && !empty($_SESSION["cart_item"])) 
+    {
+        // Insert each cart item as a separate order
+        foreach ($_SESSION["cart_item"] as $item)
+        {
+            $item_total += ($item["price"]*$item["quantity"]);
+            
+            $SQL="INSERT INTO users_orders(u_id,title,quantity,price,status,date) VALUES('".$_SESSION["user_id"]."','".$item["title"]."','".$item["quantity"]."','".$item["price"]."','','".date('Y-m-d H:i:s')."')";
+            
+            mysqli_query($db,$SQL);
+        }
+        
+        // Clear cart after successful order placement
+        unset($_SESSION["cart_item"]);
+        $success = "Thank you. Your order has been placed!";
+        function_alert();
+    } else {
+        // Just calculate total for display (don't insert orders)
+        if(!empty($_SESSION["cart_item"])) {
+            foreach ($_SESSION["cart_item"] as $item)
+            {
+                $item_total += ($item["price"]*$item["quantity"]);
+            }
+        }
+    }
 ?>
 
 
