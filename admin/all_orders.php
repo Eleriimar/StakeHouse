@@ -17,6 +17,7 @@ session_start();
     <link href="css/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="css/helper.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/lib/datatables/datatables.min.css" rel="stylesheet">
     
 
 </head>
@@ -120,6 +121,42 @@ session_start();
             
       
             <div class="container-fluid">
+                
+                <!-- Status Messages -->
+                <?php
+                if(isset($_GET['msg'])) {
+                    if($_GET['msg'] == 'deleted') {
+                        echo '<div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <strong>Success!</strong> Order has been deleted successfully.
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>';
+                    }
+                }
+                if(isset($_GET['error'])) {
+                    $error_msg = '';
+                    switch($_GET['error']) {
+                        case 'delete_failed':
+                            $error_msg = 'Failed to delete the order. Please try again.';
+                            break;
+                        case 'order_not_found':
+                            $error_msg = 'Order not found.';
+                            break;
+                        case 'invalid_request':
+                            $error_msg = 'Invalid request.';
+                            break;
+                        default:
+                            $error_msg = 'An error occurred.';
+                    }
+                    echo '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <strong>Error!</strong> ' . $error_msg . '
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>';
+                }
+                ?>
            
                 <div class="row">
                     <div class="col-12">
@@ -129,9 +166,25 @@ session_start();
                         <div class="card card-outline-primary">
                             <div class="card-header">
                                 <h4 class="m-b-0 text-white">All Orders</h4>
+                                <div class="card-actions">
+                                    <a href="all_orders.php" class="btn btn-sm btn-light">
+                                        <i class="fa fa-refresh"></i> Refresh
+                                    </a>
+                                </div>
                             </div>
                              
                                 <div class="table-responsive m-t-40">
+                                    <?php
+                                    // Get total order count
+                                    $count_query = "SELECT COUNT(*) as total_orders FROM users_orders";
+                                    $count_result = mysqli_query($db, $count_query);
+                                    $count_row = mysqli_fetch_array($count_result);
+                                    $total_orders = $count_row['total_orders'];
+                                    
+                                    echo "<div class='alert alert-info'>
+                                            <strong>Total Orders:</strong> $total_orders
+                                          </div>";
+                                    ?>
                                     <table id="myTable" class="table table-bordered table-striped">
                                     <thead class="thead-dark">
                                             <tr>
@@ -150,65 +203,57 @@ session_start();
                                            
 											
 											<?php
-												$sql="SELECT users.*, users_orders.* FROM users INNER JOIN users_orders ON users.u_id=users_orders.u_id ";
-                                                $query = "SELECT * FROM users_orders";
+												$sql="SELECT users.username, users.f_name, users.l_name, users.email, users.phone, users.address, users_orders.* FROM users INNER JOIN users_orders ON users.u_id=users_orders.u_id ORDER BY users_orders.date DESC";
 												$query=mysqli_query($db,$sql);
 												
 													if(!mysqli_num_rows($query) > 0 )
 														{
-															echo '<td colspan="8"><center>No Orders</center></td>';
+															echo '<tr><td colspan="8"><center>No Orders</center></td></tr>';
 														}
 													else
 														{				
 																	while($rows=mysqli_fetch_array($query))
 																		{
 																																							
+																				echo '<tr>';
+																				echo '<td>'.$rows['username'].'</td>';
+																				echo '<td>'.$rows['title'].'</td>';
+																				echo '<td>'.$rows['quantity'].'</td>';
+																				echo '<td>Ksh '.$rows['price'].'</td>';
+																				echo '<td>'.$rows['address'].'</td>';
+																								
+																				$status=$rows['status'];
+																				if($status=="" or $status=="NULL")
+																				{
 																				?>
+																				<td> <button type="button" class="btn btn-info"><span class="fa fa-bars"  aria-hidden="true" ></span> Dispatch</button></td>
+																			   <?php 
+																				  }
+																				   else if($status=="in process")
+																				 { ?>
+																				<td> <button type="button" class="btn btn-warning"><span class="fa fa-cog fa-spin"  aria-hidden="true" ></span> On The Way!</button></td> 
 																				<?php
-																					echo "<tr>";
-                                                                                    echo "<td>" . $row['order_id'] . "</td>";
-                                                                                    echo "<td>" . $row['customer_name'] . "</td>";
-                                                                                    echo "<td>" . $row['total_price'] . "</td>";
-                                                                                    echo "<td>" . $row['order_date'] . "</td>";
-                                                                                    echo "</tr>";
-																								?>
-																								<?php 
-																			$status=$rows['status'];
-																			if($status=="" or $status=="NULL")
-																			{
-																			?>
-																			<td> <button type="button" class="btn btn-info"><span class="fa fa-bars"  aria-hidden="true" ></span> Dispatch</button></td>
-																		   <?php 
-																			  }
-																			   if($status=="in process")
-																			 { ?>
-																			<td> <button type="button" class="btn btn-warning"><span class="fa fa-cog fa-spin"  aria-hidden="true" ></span> On The Way!</button></td> 
-																			<?php
-																				}
-																			if($status=="closed")
-																				{
-																			?>
-																			<td> <button type="button" class="btn btn-primary" ><span  class="fa fa-check-circle" aria-hidden="true"></span> Delivered</button></td> 
-																			<?php 
-																			} 
-																			?>
-																			<?php
-																			if($status=="rejected")
-																				{
-																			?>
-																			<td> <button type="button" class="btn btn-danger"> <i class="fa fa-close"></i> Cancelled</button></td> 
-																			<?php 
-																			} 
-																			?>
-																						<?php																									
-																							echo '	<td>'.$rows['date'].'</td>';
-																							?>
-																									 <td>
-																									 <a href="delete_orders.php?order_del=<?php echo $rows['o_id'];?>" onclick="return confirm('Are you sure?');" class="btn btn-danger btn-flat btn-addon btn-xs m-b-10"><i class="fa fa-trash-o" style="font-size:16px"></i></a> 
-																								<?php
-																								echo '<a href="view_order.php?user_upd='.$rows['o_id'].'" " class="btn btn-info btn-flat btn-addon btn-sm m-b-10 m-l-5"><i class="fa fa-edit"></i></a>
-																									</td>
-																									</tr>';
+																					}
+																				else if($status=="closed")
+																					{
+																				?>
+																				<td> <button type="button" class="btn btn-success" ><span  class="fa fa-check-circle" aria-hidden="true"></span> Delivered</button></td> 
+																				<?php 
+																				} 
+																				else if($status=="rejected")
+																					{
+																				?>
+																				<td> <button type="button" class="btn btn-danger"> <i class="fa fa-close"></i> Cancelled</button></td> 
+																				<?php 
+																				} 
+																				?>
+																							<?php																									
+																								echo '<td>'.$rows['date'].'</td>';
+																								echo '<td>
+																									 <a href="delete_orders.php?order_del='.$rows['o_id'].'" onclick="return confirm(\'Are you sure you want to delete this order?\');" class="btn btn-danger btn-flat btn-addon btn-xs m-b-10"><i class="fa fa-trash-o" style="font-size:16px"></i></a> 
+																									 <a href="view_order.php?user_upd='.$rows['o_id'].'" class="btn btn-info btn-flat btn-addon btn-sm m-b-10 m-l-5"><i class="fa fa-edit"></i></a>
+																									</td>';
+																								echo '</tr>';
 																					 
 																						
 																						
@@ -256,6 +301,19 @@ session_start();
     <script src="js/lib/datatables/cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js"></script>
     <script src="js/lib/datatables/cdn.datatables.net/buttons/1.2.2/js/buttons.html5.min.js"></script>
     <script src="js/lib/datatables/cdn.datatables.net/buttons/1.2.2/js/buttons.print.min.js"></script>
+    
+    <script>
+    $(document).ready(function() {
+        $('#myTable').DataTable({
+            "order": [[ 6, "desc" ]], // Sort by date column (index 6) in descending order
+            "pageLength": 25,
+            "responsive": true,
+            "columnDefs": [
+                { "orderable": false, "targets": [7] } // Disable sorting on Action column
+            ]
+        });
+    });
+    </script>
     
 </body>
 
